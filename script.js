@@ -1,136 +1,100 @@
-
-let video = document.getElementById('video');
-let canvas = document.getElementById('canvas');
-let ctx = canvas.getContext('2d');
-let stream;
-let model;
-let nightVision = false;
-let thermalVision = false;
-let totalPeoplePassed = 0;
-
-const emojis = {
-  person: "🧍",
-  cat: "🐱",
-  dog: "🐶",
-  horse: "🐴",
-  default: "❓"
-};
+let mediaRecorder;
+let recordedChunks = [];
+let faceModel, objectModel;
+let smileCount = 0;
+let personCount = 0;
 
 async function startCamera() {
-  const constraints = {
-    video: { facingMode: { exact: "environment" } }
-  };
-
-  try {
-    stream = await navigator.mediaDevices.getUserMedia(constraints);
-    video.srcObject = stream;
-    model = await cocoSsd.load();
-    detectFrame();
-  } catch (error) {
-    console.error("لم يتم العثور على كاميرا خلفية، يتم التبديل للكاميرا الأمامية...");
-    startFrontCamera();
-  }
+    const video = document.getElementById('videoElement');
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        video.srcObject = stream;
+        setupRecording(stream);
+        detectObjects(video);
+        detectSmile(video);
+    } catch (err) {
+        console.error('Error accessing the camera: ', err);
+    }
 }
 
-async function startFrontCamera() {
-  const constraints = {
-    video: { facingMode: "user" }
-  };
-
-  stream = await navigator.mediaDevices.getUserMedia(constraints);
-  video.srcObject = stream;
-  model = await cocoSsd.load();
-  detectFrame();
+function setupRecording(stream) {
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = function (e) {
+        if (e.data.size > 0) {
+            recordedChunks.push(e.data);
+        }
+    };
+    mediaRecorder.onstop = saveRecording;
 }
 
-function stopCamera() {
-  if (stream) {
-    stream.getTracks().forEach(track => track.stop());
-  }
+function startRecording() {
+    recordedChunks = [];
+    mediaRecorder.start();
+}
+
+function stopRecording() {
+    mediaRecorder.stop();
+}
+
+function saveRecording() {
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'AsemVisionRecording.webm';
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 function enableNightVision() {
-  nightVision = true;
-  thermalVision = false;
+    const video = document.getElementById('videoElement');
+    video.style.filter = 'brightness(0.5) contrast(2)';
 }
 
 function enableThermalVision() {
-  thermalVision = true;
-  nightVision = false;
+    const video = document.getElementById('videoElement');
+    video.style.filter = 'invert(1) hue-rotate(90deg) saturate(2)';
 }
 
-async function detectFrame() {
-  if (!model) return;
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  let predictions = await model.detect(video);
-  let people = 0;
-  let emojiDisplay = "";
-
-  predictions.forEach(pred => {
-    let [x, y, width, height] = pred.bbox;
-
-    if (width < 50 || height < 50) return;
-
-    const emoji = emojis[pred.class] || emojis.default;
-    emojiDisplay += emoji + " ";
-
-    if (pred.class === 'person' && pred.score > 0.5) {
-      people++;
-      let suspicious = (height > 300 || width > 200);
-
-      ctx.strokeStyle = suspicious ? 'red' : '#00ff00';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x, y, width, height);
-      ctx.fillStyle = suspicious ? 'red' : '#00ff00';
-      ctx.font = '18px Arial';
-      ctx.fillText(suspicious ? 'مريب' : 'طبيعي', x, y > 20 ? y - 5 : y + 15);
-    }
-  });
-
-  if (people > 0) {
-    totalPeoplePassed += people;
-  }
-
-  document.getElementById('counter').innerHTML = `
-    الأشخاص الظاهرين الآن: ${people}<br>
-    الأشخاص الذين مروا إجمالًا: ${totalPeoplePassed}<br>
-    ما تم رصده: ${emojiDisplay}
-  `;
-
-  if (nightVision) applyNightVision();
-  if (thermalVision) applyThermalVision();
-
-  requestAnimationFrame(detectFrame);
+function removeFilters() {
+    const video = document.getElementById('videoElement');
+    video.style.filter = 'none';
 }
 
-function applyNightVision() {
-  let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  let data = imageData.data;
-  for (let i = 0; i < data.length; i += 4) {
-    let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    avg = Math.min(255, avg * 3);
-    data[i] = avg * 0.2;
-    data[i + 1] = avg;
-    data[i + 2] = avg * 0.2;
-  }
-  ctx.putImageData(imageData, 0, 0);
+async function detectObjects(video) {
+    objectModel = await cocoSsd.load();
+    setInterval(async () => {
+        const predictions = await objectModel.detect(video);
+        let detected = 'لا يوجد';
+        personCount = 0;
+        for (const prediction of predictions) {
+            if (prediction.class === 'person') personCount++;
+            if (['cat', 'dog', 'person'].includes(prediction.class)) {
+                detected = prediction.class === 'person' ? '👤 شخص' :
+                           prediction.class === 'cat' ? '🐱 قطة' :
+                           '🐶 كلب';
+            }
+        }
+        document.getElementById('currentCount').textContent = personCount;
+        document.getElementById('detectedObject').textContent = detected;
+    }, 1000);
 }
 
-function applyThermalVision() {
-  let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  let data = imageData.data;
-  for (let i = 0; i < data.length; i += 4) {
-    let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    if (avg < 85) {
-      data[i] = 0; data[i + 1] = 0; data[i + 2] = 255;
-    } else if (avg < 170) {
-      data[i] = 255; data[i + 1] = 165; data[i + 2] = 0;
-    } else {
-      data[i] = 255; data[i + 1] = 0; data[i + 2] = 0;
-    }
-  }
-  ctx.putImageData(imageData, 0, 0);
+async function detectSmile(video) {
+    faceModel = await blazeface.load();
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
+    setInterval(async () => {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const faces = await faceModel.estimateFaces(canvas, false);
+        for (const face of faces) {
+            if (face.probability && face.probability[0] > 0.90) {
+                smileCount++;
+                document.getElementById('smileCount').textContent = smileCount;
+            }
+        }
+    }, 2000);
 }
+
+window.onload = startCamera;
