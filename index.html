@@ -2,27 +2,24 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>AsemVision Ultimate - Night Vision</title>
+    <title>AsemVision Ultimate - الرؤية الليلية والحرارية</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>AsemVision Ultimate 🚀 - الرؤية الليلية والكشف الذكي</h1>
+    <h1>AsemVision Ultimate 🚀 - الرؤية الليلية والحرارية</h1>
+    <div class="button-group">
+        <button onclick="startCamera()">تشغيل الكاميرا</button>
+        <button onclick="stopCamera()">إيقاف الكاميرا</button>
+        <button onclick="toggleNightVision()">رؤية ليلية 🌌</button>
+        <button onclick="toggleThermalVision()">رؤية حرارية 🔥</button>
+        <button onclick="toggleAlertSound()">تشغيل/إيقاف الصوت 🔔</button>
+    </div>
     <div class="video-container">
         <video id="videoElement" autoplay muted playsinline></video>
         <canvas id="overlay"></canvas>
     </div>
     <div id="nightVisionStatus" style="margin-top:10px; font-size:18px; color:lightgreen;">
         🌌 الرؤية الليلية متوقفة
-    </div>
-    <div class="button-group">
-        <button onclick="startCamera()">تشغيل الكاميرا</button>
-        <button onclick="stopCamera()">إيقاف الكاميرا</button>
-        <button onclick="toggleCamera()">تبديل الكاميرا 🔄</button>
-        <button onclick="startRecording()">بدء التسجيل</button>
-        <button onclick="stopRecording()">إيقاف التسجيل</button>
-        <button onclick="toggleNightVision()">رؤية ليلية 🌌</button>
-        <button onclick="toggleAlertSound()">تشغيل/إيقاف الصوت 🔔</button>
-        <button onclick="removeFilters()">إيقاف الفلاتر</button>
     </div>
     <div id="infoPanel">
         <p>👥 الأشخاص الحاليين: <span id="currentCount">0</span></p>

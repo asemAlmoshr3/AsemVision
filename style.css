@@ -3,46 +3,42 @@ body {
     color: white;
     font-family: Arial, sans-serif;
     text-align: center;
-    padding: 20px;
+    padding: 10px;
 }
 
 .video-container {
     position: relative;
-    display: inline-block;
+    width: 98%;
+    margin: 10px auto;
 }
 
 video, canvas {
-    width: 80%;
+    width: 100%;
+    height: auto;
     border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.7);
-}
-
-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
+    border: 2px solid cyan;
 }
 
 .button-group {
-    margin-top: 20px;
+    margin-bottom: 15px;
 }
 
 button {
-    background-color: #333;
-    color: white;
+    background-color: #00cccc;
+    color: black;
     border: none;
     padding: 10px 20px;
     margin: 5px;
     font-size: 16px;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
 }
 
 button:hover {
-    background-color: #555;
+    background-color: #00aaaa;
 }
 
 #infoPanel {
-    margin-top: 20px;
+    margin-top: 15px;
     font-size: 18px;
 }
