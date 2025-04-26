@@ -1,27 +1,4 @@
-
 let videoStream;
-
-async function startCamera() {
-    const video = document.getElementById('videoElement');
-    try {
-        videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        video.srcObject = videoStream;
-        setupRecording(videoStream); // إعادة ربط التسجيل لما نشغل الكاميرا
-        detectObjects(video); // إعادة كشف الكائنات
-        detectSmile(video); // إعادة كشف الابتسامة
-    } catch (err) {
-        console.error('Error accessing the camera: ', err);
-    }
-}
-
-function stopCamera() {
-    const video = document.getElementById('videoElement');
-    if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
-    }
-}
-
 let mediaRecorder;
 let recordedChunks = [];
 let faceModel, objectModel;
@@ -31,13 +8,22 @@ let personCount = 0;
 async function startCamera() {
     const video = document.getElementById('videoElement');
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        video.srcObject = stream;
-        setupRecording(stream);
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+        video.srcObject = videoStream;
+        setupRecording(videoStream);
         detectObjects(video);
         detectSmile(video);
     } catch (err) {
         console.error('Error accessing the camera: ', err);
+        alert('خطأ في الوصول إلى الكاميرا: ' + err.message);
+    }
+}
+
+function stopCamera() {
+    const video = document.getElementById('videoElement');
+    if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
     }
 }
 
@@ -52,12 +38,16 @@ function setupRecording(stream) {
 }
 
 function startRecording() {
-    recordedChunks = [];
-    mediaRecorder.start();
+    if (mediaRecorder && mediaRecorder.state === "inactive") {
+        recordedChunks = [];
+        mediaRecorder.start();
+    }
 }
 
 function stopRecording() {
-    mediaRecorder.stop();
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+    }
 }
 
 function saveRecording() {
@@ -88,6 +78,7 @@ function removeFilters() {
 async function detectObjects(video) {
     objectModel = await cocoSsd.load();
     setInterval(async () => {
+        if (!videoStream) return;
         const predictions = await objectModel.detect(video);
         let detected = 'لا يوجد';
         personCount = 0;
@@ -101,15 +92,18 @@ async function detectObjects(video) {
         }
         document.getElementById('currentCount').textContent = personCount;
         document.getElementById('detectedObject').textContent = detected;
-    }, 1000);
+    }, 1500);
 }
 
 async function detectSmile(video) {
     faceModel = await blazeface.load();
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
+    canvas.width = 640;
+    canvas.height = 480;
 
     setInterval(async () => {
+        if (!videoStream) return;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const faces = await faceModel.estimateFaces(canvas, false);
         for (const face of faces) {
@@ -120,5 +114,3 @@ async function detectSmile(video) {
         }
     }, 2000);
 }
-
-window.onload = startCamera;
