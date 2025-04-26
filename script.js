@@ -1,3 +1,27 @@
+
+let videoStream;
+
+async function startCamera() {
+    const video = document.getElementById('videoElement');
+    try {
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        video.srcObject = videoStream;
+        setupRecording(videoStream); // إعادة ربط التسجيل لما نشغل الكاميرا
+        detectObjects(video); // إعادة كشف الكائنات
+        detectSmile(video); // إعادة كشف الابتسامة
+    } catch (err) {
+        console.error('Error accessing the camera: ', err);
+    }
+}
+
+function stopCamera() {
+    const video = document.getElementById('videoElement');
+    if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
+    }
+}
+
 let mediaRecorder;
 let recordedChunks = [];
 let faceModel, objectModel;
