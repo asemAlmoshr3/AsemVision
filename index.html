@@ -2,14 +2,17 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>AsemVision Ultimate - Motion Detection</title>
+    <title>AsemVision Ultimate - Night Vision</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>AsemVision Ultimate 🚀 - كشف حركة وتقييم</h1>
+    <h1>AsemVision Ultimate 🚀 - الرؤية الليلية والكشف الذكي</h1>
     <div class="video-container">
         <video id="videoElement" autoplay muted playsinline></video>
         <canvas id="overlay"></canvas>
+    </div>
+    <div id="nightVisionStatus" style="margin-top:10px; font-size:18px; color:lightgreen;">
+        🌌 الرؤية الليلية متوقفة
     </div>
     <div class="button-group">
         <button onclick="startCamera()">تشغيل الكاميرا</button>
@@ -17,14 +20,15 @@
         <button onclick="toggleCamera()">تبديل الكاميرا 🔄</button>
         <button onclick="startRecording()">بدء التسجيل</button>
         <button onclick="stopRecording()">إيقاف التسجيل</button>
-        <button onclick="enableNightVision()">رؤية ليلية</button>
-        <button onclick="enableThermalVision()">رؤية حرارية</button>
+        <button onclick="toggleNightVision()">رؤية ليلية 🌌</button>
+        <button onclick="toggleAlertSound()">تشغيل/إيقاف الصوت 🔔</button>
         <button onclick="removeFilters()">إيقاف الفلاتر</button>
     </div>
     <div id="infoPanel">
         <p>👥 الأشخاص الحاليين: <span id="currentCount">0</span></p>
         <p>📸 الابتسامات الملتقطة: <span id="smileCount">0</span></p>
         <p>🐾 الكائن المكتشف: <span id="detectedObject">لا يوجد</span></p>
+        <p>📈 نسبة الحركة: <span id="motionLevel">0%</span></p>
     </div>
     <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
