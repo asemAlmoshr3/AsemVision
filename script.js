@@ -96,3 +96,12 @@ async function detectObjects(video) {
 window.onload = () => {
     startCamera();
 };
+
+function toggleCanvas() {
+    const overlay = document.getElementById('overlay');
+    if (overlay.style.visibility === 'hidden') {
+        overlay.style.visibility = 'visible';
+    } else {
+        overlay.style.visibility = 'hidden';
+    }
+}
