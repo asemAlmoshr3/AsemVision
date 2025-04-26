@@ -8,6 +8,14 @@ let nightVision = false;
 let thermalVision = false;
 let totalPeoplePassed = 0;
 
+const emojis = {
+  person: "🧍",
+  cat: "🐱",
+  dog: "🐶",
+  horse: "🐴",
+  default: "❓"
+};
+
 async function startCamera() {
   const constraints = {
     video: { facingMode: { exact: "environment" } }
@@ -59,11 +67,18 @@ async function detectFrame() {
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   let predictions = await model.detect(video);
   let people = 0;
+  let emojiDisplay = "";
 
   predictions.forEach(pred => {
+    let [x, y, width, height] = pred.bbox;
+
+    if (width < 50 || height < 50) return;
+
+    const emoji = emojis[pred.class] || emojis.default;
+    emojiDisplay += emoji + " ";
+
     if (pred.class === 'person' && pred.score > 0.5) {
       people++;
-      let [x, y, width, height] = pred.bbox;
       let suspicious = (height > 300 || width > 200);
 
       ctx.strokeStyle = suspicious ? 'red' : '#00ff00';
@@ -81,7 +96,8 @@ async function detectFrame() {
 
   document.getElementById('counter').innerHTML = `
     الأشخاص الظاهرين الآن: ${people}<br>
-    الأشخاص الذين مروا إجمالًا: ${totalPeoplePassed}
+    الأشخاص الذين مروا إجمالًا: ${totalPeoplePassed}<br>
+    ما تم رصده: ${emojiDisplay}
   `;
 
   if (nightVision) applyNightVision();
