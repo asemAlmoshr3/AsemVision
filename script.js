@@ -8,14 +8,17 @@ let personCount = 0;
 async function startCamera() {
     const video = document.getElementById('videoElement');
     try {
-        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
+        videoStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { exact: "environment" } },
+            audio: true
+        });
         video.srcObject = videoStream;
         setupRecording(videoStream);
         detectObjects(video);
         detectSmile(video);
     } catch (err) {
         console.error('Error accessing the camera: ', err);
-        alert('خطأ في الوصول إلى الكاميرا: ' + err.message);
+        alert('خطأ في الوصول إلى الكاميرا الخلفية: ' + err.message);
     }
 }
 
