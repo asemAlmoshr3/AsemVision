@@ -9,6 +9,8 @@ let previousFrame = null;
 let motionDetected = false;
 let alertPlayed = false;
 let motionLevel = 0;
+let soundEnabled = true;
+let nightVisionEnabled = false;
 
 async function startCamera() {
     const video = document.getElementById('videoElement');
@@ -23,7 +25,6 @@ async function startCamera() {
         detectObjects(video);
         detectSmile(video);
         startMotionDetection(video);
-        startLightEnhancement(video);
     } catch (err) {
         console.error('Error accessing the camera: ', err);
         alert('خطأ في الوصول إلى الكاميرا: ' + err.message);
@@ -77,19 +78,18 @@ function saveRecording() {
     URL.revokeObjectURL(url);
 }
 
-function enableNightVision() {
-    const video = document.getElementById('videoElement');
-    video.style.filter = 'brightness(1.5) contrast(1.8) saturate(1.3)';
+function toggleAlertSound() {
+    soundEnabled = !soundEnabled;
 }
 
-function enableThermalVision() {
+function toggleNightVision() {
     const video = document.getElementById('videoElement');
-    video.style.filter = 'invert(1) hue-rotate(90deg) saturate(2)';
-}
-
-function removeFilters() {
-    const video = document.getElementById('videoElement');
-    video.style.filter = 'none';
+    nightVisionEnabled = !nightVisionEnabled;
+    if (nightVisionEnabled) {
+        video.style.filter = 'brightness(1.8) contrast(1.5) hue-rotate(90deg) saturate(1.5)';
+    } else {
+        video.style.filter = 'none';
+    }
 }
 
 async function detectObjects(video) {
@@ -124,7 +124,7 @@ async function detectObjects(video) {
                 context.font = "18px Arial";
                 context.fillText(label, prediction.bbox[0], prediction.bbox[1] > 20 ? prediction.bbox[1] - 5 : 10);
 
-                if (label === "🚨 مريب" && !alertPlayed) {
+                if (label === "🚨 مريب" && !alertPlayed && soundEnabled) {
                     playAlertSound();
                     alertPlayed = true;
                 }
@@ -192,11 +192,4 @@ function startMotionDetection(video) {
         }
         previousFrame = currentFrame;
     }, 500);
-}
-
-function startLightEnhancement(video) {
-    setInterval(() => {
-        const brightness = motionLevel < 1 ? '1.8' : '1.2';
-        video.style.filter = `brightness(${brightness}) contrast(1.5) saturate(1.3)`;
-    }, 2000);
 }
