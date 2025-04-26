@@ -69,7 +69,6 @@ async function detectObjects(video) {
         overlay.height = video.videoHeight;
         context.clearRect(0, 0, overlay.width, overlay.height);
 
-        // 🧠 هنا نرسم الفيديو الطبيعي أولاً
         if (nightVisionEnabled) {
             context.filter = "brightness(3) contrast(1.8) hue-rotate(90deg) saturate(1.5)";
         } else if (thermalVisionEnabled) {
@@ -77,6 +76,7 @@ async function detectObjects(video) {
         } else {
             context.filter = "none";
         }
+
         context.drawImage(video, 0, 0, overlay.width, overlay.height);
         context.filter = "none";
 
@@ -86,7 +86,6 @@ async function detectObjects(video) {
         for (const prediction of predictions) {
             if (prediction.class === 'person') {
                 personCount++;
-
                 context.beginPath();
                 context.rect(...prediction.bbox);
                 context.lineWidth = 3;
