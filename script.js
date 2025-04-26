@@ -1,4 +1,5 @@
 let videoStream;
+let useFrontCamera = false; // نبدأ بالخلفية
 let mediaRecorder;
 let recordedChunks = [];
 let faceModel, objectModel;
@@ -7,18 +8,19 @@ let personCount = 0;
 
 async function startCamera() {
     const video = document.getElementById('videoElement');
+    const constraints = {
+        video: { facingMode: useFrontCamera ? 'user' : { exact: 'environment' } },
+        audio: true
+    };
     try {
-        videoStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { exact: "environment" } },
-            audio: true
-        });
+        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = videoStream;
         setupRecording(videoStream);
         detectObjects(video);
         detectSmile(video);
     } catch (err) {
         console.error('Error accessing the camera: ', err);
-        alert('خطأ في الوصول إلى الكاميرا الخلفية: ' + err.message);
+        alert('خطأ في الوصول إلى الكاميرا: ' + err.message);
     }
 }
 
@@ -28,6 +30,12 @@ function stopCamera() {
         videoStream.getTracks().forEach(track => track.stop());
         video.srcObject = null;
     }
+}
+
+function toggleCamera() {
+    stopCamera();
+    useFrontCamera = !useFrontCamera;
+    startCamera();
 }
 
 function setupRecording(stream) {
