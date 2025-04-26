@@ -69,10 +69,11 @@ async function detectObjects(video) {
         overlay.height = video.videoHeight;
         context.clearRect(0, 0, overlay.width, overlay.height);
 
+        // 🧠 هنا فلاتر الرؤية الليلية والحرارية القوية
         if (nightVisionEnabled) {
-            context.filter = "brightness(3) contrast(1.8) hue-rotate(90deg) saturate(1.5)";
+            context.filter = "brightness(4) contrast(2) hue-rotate(90deg) saturate(2)";
         } else if (thermalVisionEnabled) {
-            context.filter = "invert(1) hue-rotate(90deg) saturate(2)";
+            context.filter = "invert(1) hue-rotate(200deg) saturate(3) contrast(2)";
         } else {
             context.filter = "none";
         }
