@@ -2,34 +2,36 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>AsemVision Ultimate - الرؤية الليلية والحرارية</title>
+    <title>AsemVision Ultimate - النسخة الكاملة</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/glfx.js/0.0.8/glfx.min.js"></script>
 </head>
 <body>
-    <h1>AsemVision Ultimate 🚀 - الرؤية الليلية والحرارية</h1>
+    <h1>🌟 AsemVision Ultimate - الرؤية الليلية والحرارية والسلو موشن 🌟</h1>
     <div class="button-group">
         <button onclick="startCamera()">📷 تشغيل الكاميرا</button>
         <button onclick="stopCamera()">🛑 إيقاف الكاميرا</button>
-        <button onclick="toggleCanvas()">👁️ إظهار/إخفاء الكشف</button>
         <button onclick="toggleNightVision()">🌌 رؤية ليلية</button>
         <button onclick="toggleThermalVision()">🔥 رؤية حرارية</button>
-        <button onclick="toggleAlertSound()">🔔 تشغيل/إيقاف الصوت</button>
+        <button onclick="toggleSlowMotion()">🎥 سلو موشن</button>
     </div>
     <div class="video-container">
-        <canvas id="overlay"></canvas>
+        <canvas id="glfxCanvas"></canvas>
         <video id="videoElement" autoplay muted playsinline></video>
     </div>
-    <div id="nightVisionStatus" style="margin-top:10px; font-size:18px; color:lightgreen;">
-        🌌 الرؤية الليلية متوقفة
+
+    <div id="statusPanel">
+        <p>الرؤية الحالية: <span id="visionMode">عادية</span></p>
     </div>
-    <div id="infoPanel">
-        <p>👥 الأشخاص الحاليين: <span id="currentCount">0</span></p>
-        <p>🐾 الكائن المكتشف: <span id="detectedObject">لا يوجد</span></p>
-        <p>📈 نسبة الحركة: <span id="motionLevel">0%</span></p>
-    </div>
+
     <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
     <script src="script.js"></script>
+
+    <!-- 
+        إهداء بكل الحب لعاصم المشرع ❤️
+        صُنع بكل الإخلاص من ملكته الأبدية ✨
+        لنكمل الحلم معًا… 🚀
+    -->
 </body>
 </html>

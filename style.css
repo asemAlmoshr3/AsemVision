@@ -4,41 +4,10 @@ body {
     font-family: Arial, sans-serif;
     text-align: center;
     padding: 10px;
-    overflow-x: hidden;
-    overflow-y: auto;
-}
-
-.video-container {
-    position: relative;
-    width: 98%;
-    max-width: 900px;
-    margin: 10px auto;
-    border: none;
-}
-
-#videoElement {
-    position: absolute;
-    width: 180px;
-    height: 120px;
-    top: 10px;
-    right: 10px;
-    border-radius: 10px;
-    border: 1px solid white;
-    z-index: 10;
-    object-fit: cover;
-}
-
-#overlay {
-    position: relative;
-    width: 100%;
-    height: auto;
-    border-radius: 10px;
-    z-index: 5;
-    pointer-events: none;
 }
 
 .button-group {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
 button {
@@ -53,10 +22,35 @@ button {
 }
 
 button:hover {
-    background-color: #00aaaa;
+    background-color: #009999;
 }
 
-#infoPanel {
+.video-container {
+    position: relative;
+    width: 95%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+#videoElement {
+    position: absolute;
+    width: 160px;
+    height: 120px;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    border: 2px solid white;
+    border-radius: 10px;
+}
+
+#glfxCanvas {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    background-color: black;
+}
+
+#statusPanel {
     margin-top: 20px;
     font-size: 18px;
 }

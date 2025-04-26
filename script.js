@@ -1,15 +1,12 @@
 let videoStream;
-let useFrontCamera = false;
-let objectModel;
-let personCount = 0;
-let nightVisionEnabled = false;
-let thermalVisionEnabled = false;
-let soundEnabled = true;
+let canvas, texture;
+let visionMode = "normal";
+let slowMotion = false;
 
 async function startCamera() {
     const video = document.getElementById('videoElement');
     const constraints = {
-        video: { facingMode: useFrontCamera ? 'user' : { exact: 'environment' } },
+        video: { facingMode: { ideal: "environment" } },
         audio: false
     };
     try {
@@ -17,11 +14,10 @@ async function startCamera() {
         video.srcObject = videoStream;
         video.onloadedmetadata = () => {
             video.play();
+            initGlfx();
         };
-        detectObjects(video);
     } catch (err) {
-        console.error('Error accessing the camera: ', err);
-        document.getElementById('nightVisionStatus').innerText = "⚠️ لم يتم تفعيل الكاميرا. يرجى السماح من الإعدادات.";
+        console.error('Error accessing camera: ', err);
     }
 }
 
@@ -34,83 +30,42 @@ function stopCamera() {
     }
 }
 
-function toggleAlertSound() {
-    soundEnabled = !soundEnabled;
+function initGlfx() {
+    const video = document.getElementById('videoElement');
+    canvas = fx.canvas();
+    document.getElementById('glfxCanvas').replaceWith(canvas);
+
+    const render = () => {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            texture = canvas.texture(video);
+            texture.loadContentsOf(video);
+            let draw = canvas.draw(texture);
+
+            if (visionMode === "night") {
+                draw.brightness(0.5).contrast(2).hueSaturation(0.5, 1.5);
+            } else if (visionMode === "thermal") {
+                draw.invert().hueSaturation(0.7, 2).contrast(1.5);
+            }
+
+            draw.update();
+        }
+        requestAnimationFrame(render);
+    };
+    render();
 }
 
 function toggleNightVision() {
-    nightVisionEnabled = !nightVisionEnabled;
-    if (nightVisionEnabled) {
-        thermalVisionEnabled = false;
-        document.getElementById('nightVisionStatus').innerText = "🌌 الرؤية الليلية مفعلة";
-    } else {
-        document.getElementById('nightVisionStatus').innerText = "🌌 الرؤية الليلية متوقفة";
-    }
+    visionMode = (visionMode === "night") ? "normal" : "night";
+    document.getElementById('visionMode').textContent = (visionMode === "night") ? "رؤية ليلية" : "عادية";
 }
 
 function toggleThermalVision() {
-    thermalVisionEnabled = !thermalVisionEnabled;
-    if (thermalVisionEnabled) {
-        nightVisionEnabled = false;
-        document.getElementById('nightVisionStatus').innerText = "🔥 الرؤية الحرارية مفعلة";
-    } else {
-        document.getElementById('nightVisionStatus').innerText = "🔥 الرؤية الحرارية متوقفة";
-    }
+    visionMode = (visionMode === "thermal") ? "normal" : "thermal";
+    document.getElementById('visionMode').textContent = (visionMode === "thermal") ? "رؤية حرارية" : "عادية";
 }
 
-async function detectObjects(video) {
-    objectModel = await cocoSsd.load();
-    const overlay = document.getElementById('overlay');
-    const context = overlay.getContext('2d');
-
-    setInterval(async () => {
-        if (!videoStream) return;
-        overlay.width = video.videoWidth;
-        overlay.height = video.videoHeight;
-        context.clearRect(0, 0, overlay.width, overlay.height);
-
-        // 🧠 هنا فلاتر الرؤية الليلية والحرارية القوية
-        if (nightVisionEnabled) {
-            context.filter = "brightness(4) contrast(2) hue-rotate(90deg) saturate(2)";
-        } else if (thermalVisionEnabled) {
-            context.filter = "invert(1) hue-rotate(200deg) saturate(3) contrast(2)";
-        } else {
-            context.filter = "none";
-        }
-
-        context.drawImage(video, 0, 0, overlay.width, overlay.height);
-        context.filter = "none";
-
-        const predictions = await objectModel.detect(video);
-        personCount = 0;
-
-        for (const prediction of predictions) {
-            if (prediction.class === 'person') {
-                personCount++;
-                context.beginPath();
-                context.rect(...prediction.bbox);
-                context.lineWidth = 3;
-                context.strokeStyle = 'lime';
-                context.stroke();
-                context.font = "18px Arial";
-                context.fillStyle = 'lime';
-                context.fillText("👤", prediction.bbox[0], prediction.bbox[1] > 20 ? prediction.bbox[1] - 5 : 10);
-            }
-        }
-
-        document.getElementById('currentCount').textContent = personCount;
-    }, 1000);
+function toggleSlowMotion() {
+    const video = document.getElementById('videoElement');
+    slowMotion = !slowMotion;
+    video.playbackRate = slowMotion ? 0.5 : 1.0;
 }
-
-function toggleCanvas() {
-    const overlay = document.getElementById('overlay');
-    if (overlay.style.visibility === 'hidden') {
-        overlay.style.visibility = 'visible';
-    } else {
-        overlay.style.visibility = 'hidden';
-    }
-}
-
-window.onload = () => {
-    startCamera();
-};
