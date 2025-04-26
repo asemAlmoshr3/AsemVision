@@ -11,6 +11,7 @@ let alertPlayed = false;
 let motionLevel = 0;
 let soundEnabled = true;
 let nightVisionEnabled = false;
+let thermalVisionEnabled = false;
 
 async function startCamera() {
     const video = document.getElementById('videoElement');
@@ -86,9 +87,25 @@ function toggleNightVision() {
     const video = document.getElementById('videoElement');
     nightVisionEnabled = !nightVisionEnabled;
     if (nightVisionEnabled) {
+        thermalVisionEnabled = false;
         video.style.filter = 'brightness(1.8) contrast(1.5) hue-rotate(90deg) saturate(1.5)';
+        document.getElementById('nightVisionStatus').innerText = "🌌 الرؤية الليلية مفعلة";
     } else {
         video.style.filter = 'none';
+        document.getElementById('nightVisionStatus').innerText = "🌌 الرؤية الليلية متوقفة";
+    }
+}
+
+function toggleThermalVision() {
+    const video = document.getElementById('videoElement');
+    thermalVisionEnabled = !thermalVisionEnabled;
+    if (thermalVisionEnabled) {
+        nightVisionEnabled = false;
+        video.style.filter = 'invert(1) hue-rotate(90deg) saturate(2)';
+        document.getElementById('nightVisionStatus').innerText = "🔥 الرؤية الحرارية مفعلة";
+    } else {
+        video.style.filter = 'none';
+        document.getElementById('nightVisionStatus').innerText = "🔥 الرؤية الحرارية متوقفة";
     }
 }
 
