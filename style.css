@@ -6,11 +6,21 @@ body {
     padding: 20px;
 }
 
-video {
+.video-container {
+    position: relative;
+    display: inline-block;
+}
+
+video, canvas {
     width: 80%;
-    margin: 20px 0;
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0,0,0,0.7);
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
 .button-group {

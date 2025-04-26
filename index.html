@@ -2,12 +2,15 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>AsemVision Ultimate - Switch Camera</title>
+    <title>AsemVision Ultimate - Motion Detection</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>AsemVision Ultimate 🚀 - تبديل الكاميرا</h1>
-    <video id="videoElement" autoplay muted playsinline></video>
+    <h1>AsemVision Ultimate 🚀 - كشف حركة وتقييم</h1>
+    <div class="video-container">
+        <video id="videoElement" autoplay muted playsinline></video>
+        <canvas id="overlay"></canvas>
+    </div>
     <div class="button-group">
         <button onclick="startCamera()">تشغيل الكاميرا</button>
         <button onclick="stopCamera()">إيقاف الكاميرا</button>
@@ -23,6 +26,7 @@
         <p>📸 الابتسامات الملتقطة: <span id="smileCount">0</span></p>
         <p>🐾 الكائن المكتشف: <span id="detectedObject">لا يوجد</span></p>
     </div>
+    <audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
