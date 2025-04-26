@@ -1,7 +1,5 @@
 let videoStream;
 let useFrontCamera = false;
-let mediaRecorder;
-let recordedChunks = [];
 let objectModel;
 let personCount = 0;
 let nightVisionEnabled = false;
@@ -20,22 +18,15 @@ async function startCamera() {
         detectObjects(video);
     } catch (err) {
         console.error('Error accessing the camera: ', err);
-        alert('خطأ في الوصول إلى الكاميرا: ' + err.message);
+        document.getElementById('nightVisionStatus').innerText = "⚠️ لم يتم تفعيل الكاميرا. يرجى السماح من الإعدادات.";
     }
 }
 
 function stopCamera() {
-    const video = document.getElementById('videoElement');
     if (videoStream) {
         videoStream.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
+        videoStream = null;
     }
-}
-
-function toggleCamera() {
-    stopCamera();
-    useFrontCamera = !useFrontCamera;
-    startCamera();
 }
 
 function toggleAlertSound() {
@@ -47,7 +38,7 @@ function toggleNightVision() {
     nightVisionEnabled = !nightVisionEnabled;
     if (nightVisionEnabled) {
         thermalVisionEnabled = false;
-        video.style.filter = 'brightness(2.5) contrast(1.7) hue-rotate(90deg) saturate(1.5)';
+        video.style.filter = 'brightness(3) contrast(1.8) hue-rotate(90deg) saturate(1.5)';
         document.getElementById('nightVisionStatus').innerText = "🌌 الرؤية الليلية مفعلة";
     } else {
         video.style.filter = 'none';
@@ -100,3 +91,8 @@ async function detectObjects(video) {
         document.getElementById('currentCount').textContent = personCount;
     }, 1000);
 }
+
+// 🚀 تشغيل الكاميرا تلقائياً عند فتح الصفحة
+window.onload = () => {
+    startCamera();
+};
