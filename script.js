@@ -15,6 +15,7 @@ async function startCamera() {
     try {
         videoStream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = videoStream;
+        video.play();
         detectObjects(video);
     } catch (err) {
         console.error('Error accessing the camera: ', err);
@@ -26,6 +27,8 @@ function stopCamera() {
     if (videoStream) {
         videoStream.getTracks().forEach(track => track.stop());
         videoStream = null;
+        const video = document.getElementById('videoElement');
+        video.srcObject = null;
     }
 }
 
@@ -92,11 +95,6 @@ async function detectObjects(video) {
     }, 1000);
 }
 
-// 🚀 تشغيل الكاميرا تلقائياً عند فتح الصفحة
-window.onload = () => {
-    startCamera();
-};
-
 function toggleCanvas() {
     const overlay = document.getElementById('overlay');
     if (overlay.style.visibility === 'hidden') {
@@ -105,3 +103,7 @@ function toggleCanvas() {
         overlay.style.visibility = 'hidden';
     }
 }
+
+window.onload = () => {
+    startCamera();
+};
