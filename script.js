@@ -1,5 +1,5 @@
 let videoStream;
-let useFrontCamera = false; // نبدأ بالخلفية
+let useFrontCamera = false;
 let mediaRecorder;
 let recordedChunks = [];
 let faceModel, objectModel;
@@ -8,6 +8,7 @@ let personCount = 0;
 let previousFrame = null;
 let motionDetected = false;
 let alertPlayed = false;
+let motionLevel = 0;
 
 async function startCamera() {
     const video = document.getElementById('videoElement');
@@ -22,6 +23,7 @@ async function startCamera() {
         detectObjects(video);
         detectSmile(video);
         startMotionDetection(video);
+        startLightEnhancement(video);
     } catch (err) {
         console.error('Error accessing the camera: ', err);
         alert('خطأ في الوصول إلى الكاميرا: ' + err.message);
@@ -77,7 +79,7 @@ function saveRecording() {
 
 function enableNightVision() {
     const video = document.getElementById('videoElement');
-    video.style.filter = 'brightness(1.5) contrast(1.8) saturate(1.5)';
+    video.style.filter = 'brightness(1.5) contrast(1.8) saturate(1.3)';
 }
 
 function enableThermalVision() {
@@ -106,35 +108,32 @@ async function detectObjects(video) {
         personCount = 0;
 
         for (const prediction of predictions) {
-            if (prediction.class === 'person') {
+            if (['person', 'cat', 'dog'].includes(prediction.class)) {
                 personCount++;
+                const suspicious = motionDetected && !alertPlayed;
+                const label = prediction.class === 'person' ? (suspicious ? "🚨 مريب" : "👤 عادي")
+                             : prediction.class === 'cat' ? "🐱 قطة"
+                             : "🐶 كلب";
+
                 context.beginPath();
                 context.rect(...prediction.bbox);
                 context.lineWidth = 3;
-                context.strokeStyle = 'lime';
-                context.fillStyle = 'lime';
+                context.strokeStyle = (label === "🚨 مريب") ? 'red' : 'lime';
+                context.fillStyle = (label === "🚨 مريب") ? 'red' : 'lime';
                 context.stroke();
-                
-                // تقييم الحركة
-                const suspicious = motionDetected && !alertPlayed;
-                const label = suspicious ? "🚨 مريب" : "👤 عادي";
                 context.font = "18px Arial";
                 context.fillText(label, prediction.bbox[0], prediction.bbox[1] > 20 ? prediction.bbox[1] - 5 : 10);
 
-                if (suspicious) {
+                if (label === "🚨 مريب" && !alertPlayed) {
                     playAlertSound();
-                    alertPlayed = true; // لا تكرر الصوت أكثر من مرة متتالية
+                    alertPlayed = true;
                 }
-            }
-            if (['cat', 'dog', 'person'].includes(prediction.class)) {
-                detected = prediction.class === 'person' ? '👤 شخص' :
-                           prediction.class === 'cat' ? '🐱 قطة' :
-                           '🐶 كلب';
             }
         }
 
         document.getElementById('currentCount').textContent = personCount;
         document.getElementById('detectedObject').textContent = detected;
+        document.getElementById('motionLevel').textContent = motionLevel.toFixed(1) + '%';
     }, 1000);
 }
 
@@ -171,7 +170,6 @@ function startMotionDetection(video) {
 
     setInterval(() => {
         if (!videoStream) return;
-
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const currentFrame = context.getImageData(0, 0, canvas.width, canvas.height);
 
@@ -186,11 +184,19 @@ function startMotionDetection(video) {
                     motionPixels++;
                 }
             }
-            motionDetected = motionPixels > 10000; // تحسس للحركة
+            motionLevel = (motionPixels / (canvas.width * canvas.height)) * 100;
+            motionDetected = motionLevel > 1;
             if (!motionDetected) {
-                alertPlayed = false; // إعادة تمكين التنبيه
+                alertPlayed = false;
             }
         }
         previousFrame = currentFrame;
     }, 500);
+}
+
+function startLightEnhancement(video) {
+    setInterval(() => {
+        const brightness = motionLevel < 1 ? '1.8' : '1.2';
+        video.style.filter = `brightness(${brightness}) contrast(1.5) saturate(1.3)`;
+    }, 2000);
 }
