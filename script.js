@@ -39,27 +39,21 @@ function toggleAlertSound() {
 }
 
 function toggleNightVision() {
-    const video = document.getElementById('videoElement');
     nightVisionEnabled = !nightVisionEnabled;
     if (nightVisionEnabled) {
         thermalVisionEnabled = false;
-        video.style.filter = 'brightness(3) contrast(1.8) hue-rotate(90deg) saturate(1.5)';
         document.getElementById('nightVisionStatus').innerText = "🌌 الرؤية الليلية مفعلة";
     } else {
-        video.style.filter = 'none';
         document.getElementById('nightVisionStatus').innerText = "🌌 الرؤية الليلية متوقفة";
     }
 }
 
 function toggleThermalVision() {
-    const video = document.getElementById('videoElement');
     thermalVisionEnabled = !thermalVisionEnabled;
     if (thermalVisionEnabled) {
         nightVisionEnabled = false;
-        video.style.filter = 'invert(1) hue-rotate(90deg) saturate(2)';
         document.getElementById('nightVisionStatus').innerText = "🔥 الرؤية الحرارية مفعلة";
     } else {
-        video.style.filter = 'none';
         document.getElementById('nightVisionStatus').innerText = "🔥 الرؤية الحرارية متوقفة";
     }
 }
@@ -74,6 +68,17 @@ async function detectObjects(video) {
         overlay.width = video.videoWidth;
         overlay.height = video.videoHeight;
         context.clearRect(0, 0, overlay.width, overlay.height);
+
+        // 🧠 هنا نرسم الفيديو الطبيعي أولاً
+        if (nightVisionEnabled) {
+            context.filter = "brightness(3) contrast(1.8) hue-rotate(90deg) saturate(1.5)";
+        } else if (thermalVisionEnabled) {
+            context.filter = "invert(1) hue-rotate(90deg) saturate(2)";
+        } else {
+            context.filter = "none";
+        }
+        context.drawImage(video, 0, 0, overlay.width, overlay.height);
+        context.filter = "none";
 
         const predictions = await objectModel.detect(video);
         personCount = 0;
