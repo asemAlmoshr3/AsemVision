@@ -1,7 +1,7 @@
 let videoStream;
-let canvas, texture;
-let visionMode = "normal";
-let slowMotion = false;
+let model;
+let personCount = 0;
+let nightVision = false;
 
 async function startCamera() {
     const video = document.getElementById('videoElement');
@@ -14,10 +14,10 @@ async function startCamera() {
         video.srcObject = videoStream;
         video.onloadedmetadata = () => {
             video.play();
-            initGlfx();
+            loadModel();
         };
     } catch (err) {
-        console.error('Error accessing camera: ', err);
+        console.error('Error accessing the camera: ', err);
     }
 }
 
@@ -30,42 +30,52 @@ function stopCamera() {
     }
 }
 
-function initGlfx() {
+function toggleNightVision() {
+    nightVision = !nightVision;
     const video = document.getElementById('videoElement');
-    canvas = fx.canvas();
-    document.getElementById('glfxCanvas').replaceWith(canvas);
+    if (nightVision) {
+        video.style.filter = "brightness(2) contrast(1.5) hue-rotate(90deg) saturate(1.5)";
+    } else {
+        video.style.filter = "none";
+    }
+}
 
-    const render = () => {
+async function loadModel() {
+    model = await cocoSsd.load();
+    detectFrame();
+}
+
+async function detectFrame() {
+    const video = document.getElementById('videoElement');
+    const overlay = document.getElementById('overlay');
+    const context = overlay.getContext('2d');
+
+    async function render() {
         if (video.readyState === video.HAVE_ENOUGH_DATA) {
-            texture = canvas.texture(video);
-            texture.loadContentsOf(video);
-            let draw = canvas.draw(texture);
+            overlay.width = video.videoWidth;
+            overlay.height = video.videoHeight;
+            context.clearRect(0, 0, overlay.width, overlay.height);
 
-            if (visionMode === "night") {
-                draw.brightness(0.5).contrast(2).hueSaturation(0.5, 1.5);
-            } else if (visionMode === "thermal") {
-                draw.invert().hueSaturation(0.7, 2).contrast(1.5);
-            }
+            const predictions = await model.detect(video);
+            personCount = 0;
 
-            draw.update();
+            predictions.forEach(prediction => {
+                if (prediction.class === 'person') {
+                    personCount++;
+                    context.beginPath();
+                    context.rect(...prediction.bbox);
+                    context.lineWidth = 2;
+                    context.strokeStyle = 'lime';
+                    context.stroke();
+                    context.font = "16px Arial";
+                    context.fillStyle = 'lime';
+                    context.fillText("👤", prediction.bbox[0], prediction.bbox[1] > 20 ? prediction.bbox[1] - 5 : 10);
+                }
+            });
+
+            document.getElementById('currentCount').textContent = personCount;
         }
         requestAnimationFrame(render);
-    };
+    }
     render();
-}
-
-function toggleNightVision() {
-    visionMode = (visionMode === "night") ? "normal" : "night";
-    document.getElementById('visionMode').textContent = (visionMode === "night") ? "رؤية ليلية" : "عادية";
-}
-
-function toggleThermalVision() {
-    visionMode = (visionMode === "thermal") ? "normal" : "thermal";
-    document.getElementById('visionMode').textContent = (visionMode === "thermal") ? "رؤية حرارية" : "عادية";
-}
-
-function toggleSlowMotion() {
-    const video = document.getElementById('videoElement');
-    slowMotion = !slowMotion;
-    video.playbackRate = slowMotion ? 0.5 : 1.0;
 }
