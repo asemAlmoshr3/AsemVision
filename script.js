@@ -15,7 +15,9 @@ async function startCamera() {
     try {
         videoStream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = videoStream;
-        video.play();
+        video.onloadedmetadata = () => {
+            video.play();
+        };
         detectObjects(video);
     } catch (err) {
         console.error('Error accessing the camera: ', err);
