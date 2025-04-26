@@ -38,7 +38,31 @@
     let thermalVision = false;
 
     async function startCamera() {
-      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const constraints = {
+        video: {
+          facingMode: { exact: "environment" }
+        }
+      };
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+        model = await cocoSsd.load();
+        detectFrame();
+      } catch (error) {
+        console.error("لم يتم العثور على كاميرا خلفية، يتم التبديل للكاميرا الأمامية...");
+        startFrontCamera();
+      }
+    }
+
+    async function startFrontCamera() {
+      const constraints = {
+        video: {
+          facingMode: "user"
+        }
+      };
+
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
       video.srcObject = stream;
       model = await cocoSsd.load();
       detectFrame();
