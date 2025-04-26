@@ -9,14 +9,21 @@ body {
 .video-container {
     position: relative;
     width: 98%;
+    max-width: 900px;
     margin: 10px auto;
+    border: 2px solid cyan;
+    border-radius: 10px;
+    overflow: hidden;
 }
 
 video, canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
     border-radius: 10px;
-    border: 2px solid cyan;
 }
 
 .button-group {
@@ -39,6 +46,6 @@ button:hover {
 }
 
 #infoPanel {
-    margin-top: 15px;
+    margin-top: 20px;
     font-size: 18px;
 }
