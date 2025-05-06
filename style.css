@@ -1,62 +1,40 @@
+
 body {
-    background-color: #121212;
-    color: white;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 10px;
-    overflow-x: hidden;
-    overflow-y: auto;
+  background: #0a0a0a;
+  color: #00ffcc;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 20px;
 }
-
-.video-container {
-    position: relative;
-    width: 98%;
-    max-width: 900px;
-    margin: 10px auto;
-    border: none;
+video, canvas {
+  width: 90%;
+  max-width: 600px;
+  margin-top: 20px;
+  border: 2px solid #00ffcc;
+  border-radius: 10px;
 }
-
-#videoElement {
-    position: absolute;
-    width: 180px;
-    height: 120px;
-    top: 10px;
-    right: 10px;
-    border-radius: 10px;
-    border: 1px solid white;
-    z-index: 10;
-    object-fit: cover;
-}
-
-#overlay {
-    position: relative;
-    width: 100%;
-    height: auto;
-    border-radius: 10px;
-    z-index: 5;
-    pointer-events: none;
-}
-
-.button-group {
-    margin-bottom: 15px;
-}
-
 button {
-    background-color: #00cccc;
-    color: black;
-    border: none;
-    padding: 10px 20px;
-    margin: 5px;
-    font-size: 16px;
-    border-radius: 8px;
-    cursor: pointer;
+  margin: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background: transparent;
+  color: #00ffcc;
+  border: 2px solid #00ffcc;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
 }
-
 button:hover {
-    background-color: #00aaaa;
+  background: #00ffcc;
+  color: #0a0a0a;
 }
-
-#infoPanel {
-    margin-top: 20px;
-    font-size: 18px;
+#counter {
+  margin-top: 10px;
+  font-size: 20px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { color: #ffffff; }
+  50% { color: #00ffcc; }
 }

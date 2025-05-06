@@ -1,116 +1,136 @@
-let videoStream;
-let useFrontCamera = false;
-let objectModel;
-let personCount = 0;
-let nightVisionEnabled = false;
-let thermalVisionEnabled = false;
-let soundEnabled = true;
+
+let video = document.getElementById('video');
+let canvas = document.getElementById('canvas');
+let ctx = canvas.getContext('2d');
+let stream;
+let model;
+let nightVision = false;
+let thermalVision = false;
+let totalPeoplePassed = 0;
+
+const emojis = {
+  person: "🧍",
+  cat: "🐱",
+  dog: "🐶",
+  horse: "🐴",
+  default: "❓"
+};
 
 async function startCamera() {
-    const video = document.getElementById('videoElement');
-    const constraints = {
-        video: { facingMode: useFrontCamera ? 'user' : { exact: 'environment' } },
-        audio: false
-    };
-    try {
-        videoStream = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = videoStream;
-        video.onloadedmetadata = () => {
-            video.play();
-        };
-        detectObjects(video);
-    } catch (err) {
-        console.error('Error accessing the camera: ', err);
-        document.getElementById('nightVisionStatus').innerText = "⚠️ لم يتم تفعيل الكاميرا. يرجى السماح من الإعدادات.";
-    }
+  const constraints = {
+    video: { facingMode: { exact: "environment" } }
+  };
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    model = await cocoSsd.load();
+    detectFrame();
+  } catch (error) {
+    console.error("لم يتم العثور على كاميرا خلفية، يتم التبديل للكاميرا الأمامية...");
+    startFrontCamera();
+  }
+}
+
+async function startFrontCamera() {
+  const constraints = {
+    video: { facingMode: "user" }
+  };
+
+  stream = await navigator.mediaDevices.getUserMedia(constraints);
+  video.srcObject = stream;
+  model = await cocoSsd.load();
+  detectFrame();
 }
 
 function stopCamera() {
-    if (videoStream) {
-        videoStream.getTracks().forEach(track => track.stop());
-        videoStream = null;
-        const video = document.getElementById('videoElement');
-        video.srcObject = null;
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+  }
+}
+
+function enableNightVision() {
+  nightVision = true;
+  thermalVision = false;
+}
+
+function enableThermalVision() {
+  thermalVision = true;
+  nightVision = false;
+}
+
+async function detectFrame() {
+  if (!model) return;
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  let predictions = await model.detect(video);
+  let people = 0;
+  let emojiDisplay = "";
+
+  predictions.forEach(pred => {
+    let [x, y, width, height] = pred.bbox;
+
+    if (width < 50 || height < 50) return;
+
+    const emoji = emojis[pred.class] || emojis.default;
+    emojiDisplay += emoji + " ";
+
+    if (pred.class === 'person' && pred.score > 0.5) {
+      people++;
+      let suspicious = (height > 300 || width > 200);
+
+      ctx.strokeStyle = suspicious ? 'red' : '#00ff00';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, width, height);
+      ctx.fillStyle = suspicious ? 'red' : '#00ff00';
+      ctx.font = '18px Arial';
+      ctx.fillText(suspicious ? 'مريب' : 'طبيعي', x, y > 20 ? y - 5 : y + 15);
     }
+  });
+
+  if (people > 0) {
+    totalPeoplePassed += people;
+  }
+
+  document.getElementById('counter').innerHTML = `
+    الأشخاص الظاهرين الآن: ${people}<br>
+    الأشخاص الذين مروا إجمالًا: ${totalPeoplePassed}<br>
+    ما تم رصده: ${emojiDisplay}
+  `;
+
+  if (nightVision) applyNightVision();
+  if (thermalVision) applyThermalVision();
+
+  requestAnimationFrame(detectFrame);
 }
 
-function toggleAlertSound() {
-    soundEnabled = !soundEnabled;
+function applyNightVision() {
+  let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  let data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+    avg = Math.min(255, avg * 3);
+    data[i] = avg * 0.2;
+    data[i + 1] = avg;
+    data[i + 2] = avg * 0.2;
+  }
+  ctx.putImageData(imageData, 0, 0);
 }
 
-function toggleNightVision() {
-    nightVisionEnabled = !nightVisionEnabled;
-    if (nightVisionEnabled) {
-        thermalVisionEnabled = false;
-        document.getElementById('nightVisionStatus').innerText = "🌌 الرؤية الليلية مفعلة";
+function applyThermalVision() {
+  let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  let data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+    if (avg < 85) {
+      data[i] = 0; data[i + 1] = 0; data[i + 2] = 255;
+    } else if (avg < 170) {
+      data[i] = 255; data[i + 1] = 165; data[i + 2] = 0;
     } else {
-        document.getElementById('nightVisionStatus').innerText = "🌌 الرؤية الليلية متوقفة";
+      data[i] = 255; data[i + 1] = 0; data[i + 2] = 0;
     }
+  }
+  ctx.putImageData(imageData, 0, 0);
 }
-
-function toggleThermalVision() {
-    thermalVisionEnabled = !thermalVisionEnabled;
-    if (thermalVisionEnabled) {
-        nightVisionEnabled = false;
-        document.getElementById('nightVisionStatus').innerText = "🔥 الرؤية الحرارية مفعلة";
-    } else {
-        document.getElementById('nightVisionStatus').innerText = "🔥 الرؤية الحرارية متوقفة";
-    }
-}
-
-async function detectObjects(video) {
-    objectModel = await cocoSsd.load();
-    const overlay = document.getElementById('overlay');
-    const context = overlay.getContext('2d');
-
-    setInterval(async () => {
-        if (!videoStream) return;
-        overlay.width = video.videoWidth;
-        overlay.height = video.videoHeight;
-        context.clearRect(0, 0, overlay.width, overlay.height);
-
-        // 🧠 هنا نرسم الفيديو الطبيعي أولاً
-        if (nightVisionEnabled) {
-            context.filter = "brightness(3) contrast(1.8) hue-rotate(90deg) saturate(1.5)";
-        } else if (thermalVisionEnabled) {
-            context.filter = "invert(1) hue-rotate(90deg) saturate(2)";
-        } else {
-            context.filter = "none";
-        }
-        context.drawImage(video, 0, 0, overlay.width, overlay.height);
-        context.filter = "none";
-
-        const predictions = await objectModel.detect(video);
-        personCount = 0;
-
-        for (const prediction of predictions) {
-            if (prediction.class === 'person') {
-                personCount++;
-
-                context.beginPath();
-                context.rect(...prediction.bbox);
-                context.lineWidth = 3;
-                context.strokeStyle = 'lime';
-                context.stroke();
-                context.font = "18px Arial";
-                context.fillStyle = 'lime';
-                context.fillText("👤", prediction.bbox[0], prediction.bbox[1] > 20 ? prediction.bbox[1] - 5 : 10);
-            }
-        }
-
-        document.getElementById('currentCount').textContent = personCount;
-    }, 1000);
-}
-
-function toggleCanvas() {
-    const overlay = document.getElementById('overlay');
-    if (overlay.style.visibility === 'hidden') {
-        overlay.style.visibility = 'visible';
-    } else {
-        overlay.style.visibility = 'hidden';
-    }
-}
-
-window.onload = () => {
-    startCamera();
-};
